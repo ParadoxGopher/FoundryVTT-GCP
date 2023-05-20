@@ -47,7 +47,7 @@ docker push $REGION-docker.pkg.dev/$PROJECT_ID/foundry-app/foundry
 ```sh
 gcloud iam service-accounts create foundry-identity
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member "serviceAccount:fs-identity@$PROJECT_ID.iam.gserviceaccount.com" \
+    --member "serviceAccount:foundry-identity@$PROJECT_ID.iam.gserviceaccount.com" \
     --role "roles/storage.objectAdmin"
 ```
 
