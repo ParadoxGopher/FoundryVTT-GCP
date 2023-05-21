@@ -3,12 +3,10 @@ this repository should give you a hint on how to deploy foundry to GCP Cloud Run
 
 > this is more like a snipped than a repository right now
 
-## FAQ ?!
-Q: what is the difference to `felddy/foundryvtt` docker image?\
-A: your bucket needs to be populated with container_cache and there will be no download of data. Why this ? because I do not want to download over and over again :-D
-
-Q: why the different entrypoint to `felddy/foundryvtt`?\
-A: GCP Cloud Run does not offer mounting filesystems (yet?) so we have to wrap the original entrypoint to mount the cloud storage bucket the rest could be called like it was intended by `felddy/foundryvtt`
+## differences to felddy/foundryvtt docker image
+- building gcsfuse for alpine image
+- added env variable to skip download entirely (using the cached zip)
+- deleting lock file on startup as the container never clears it (! could be dangerous if you have two instaces running in parallel !)
 
 ## cloud setup
 set your account id
@@ -27,23 +25,8 @@ export BUCKET_NAME=foundryvtt-data-$(echo $RANDOM | md5sum | head -c 10)
 ```sh
 gcloud storage buckets create gs://$BUCKET_NAME
 ```
-the bucket has to be populated with a folder `container_cache` containing the foundryvtt zip that you can download from the froundry website for node.
 
-### 2. prepare `Artifact Repository` (optional)
-> if you don't want to build locally you can skip this and go to #4
-```sh
-gcloud artifacts repositories create foundry-app --repository-format=docker --mode=standard-repository
-gcloud auth configure-docker $REGION-docker.pkg.dev
-```
-
-### 3. build the image locally (optional)
-> if you don't want to build locally you can skip this
-```sh
-docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/foundry-app/foundry
-docker push $REGION-docker.pkg.dev/$PROJECT_ID/foundry-app/foundry
-```
-
-### 4. create service-account for foundry
+### 2. create service-account for foundry
 ```sh
 gcloud iam service-accounts create foundry-identity
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -51,8 +34,8 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --role "roles/storage.objectAdmin"
 ```
 
-### 5. deploy to cloud run
-if you build the image locally you want to replace the `--source .` with `--image=$REGION-docker.pkg.dev/$PROJECT_ID/foundry-app/foundry`
+### 3. deploy to cloud run
+you also need to provide a download url or username and password for downloading the foundry zip (details [here](https://github.com/felddy/foundryvtt-docker/#required-variable-combinations)).
 ```sh
 gcloud run deploy foundry-app --source . \
     --execution-environment gen2 \
@@ -64,10 +47,6 @@ gcloud run deploy foundry-app --source . \
 after deploying the first time you can ommit all config parameters if you do not want to change them.
 ```sh
 gcloud run deploy foundry-app --source .
-```
-or for direct image deployment
-```sh
-gcloud run deploy foundry-app --image=$REGION-docker.pkg.dev/$PROJECT_ID/foundry-app/foundry
 ```
 
 ## local run

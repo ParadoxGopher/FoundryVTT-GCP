@@ -4,7 +4,7 @@ RUN apk add git
 ENV GOPATH=/go
 RUN go install github.com/googlecloudplatform/gcsfuse@latest
 
-FROM felddy/foundryvtt:11.297.0
+FROM felddy/foundryvtt:10.291
 
 RUN apk add --update --no-cache ca-certificates fuse
 
